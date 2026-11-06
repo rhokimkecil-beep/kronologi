@@ -75,9 +75,9 @@
         button:hover { background-color: #1557b0; }
         button:disabled { background-color: #9aa0a6; cursor: wait; }
         
-        #result { margin-top: 20px; font-size: 13px; text-align: center; line-height: 1.5; }
+        #result { margin-top: 20px; font-size: 13px; text-align: center; line-height: 1.5; word-break: break-word; }
         .success { color: #1e8e3e; font-weight: bold;}
-        .error { color: #d93025; font-weight: bold;}
+        .error { color: #d93025; font-weight: bold; background:#fce8e6; padding:10px; border-radius:6px; border:1px solid #f5c6cb; display:block;}
         
         /* Admin Panel Styling */
         #adminPanel { display: none; width: 100%; max-width: 600px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
@@ -85,7 +85,7 @@
         .log-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0; }
         .log-info { flex: 1; font-size: 13px; color: #3c4043; }
         .log-info a { color: #1a73e8; text-decoration: none; font-weight: 600; }
-        .log-info .kronologi { background: #f8f9fa; padding: 8px; border-radius: 6px; margin: 5px 0; display: block; border-left: 3px solid #1a73e8; }
+        .log-info .kronologi { background: #f8f9fa; padding: 8px; border-radius: 6px; margin: 5px 0; display: block; border-left: 3px solid #1a73e8; word-break: break-word; }
     </style>
 </head>
 <body>
@@ -138,28 +138,40 @@
         document.getElementById('publicForm').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
         
-        fetch('/api/logs').then(r => r.json()).then(data => {
-            const list = document.getElementById('logList');
-            list.innerHTML = '';
-            if(data.length === 0) list.innerHTML = '<p>Belum ada laporan masuk.</p>';
-            
-            data.forEach(item => {
-                const date = new Date(item.created_at).toLocaleString('id-ID');
-                let imgTag = item.photo ? `<img src="${item.photo}" alt="Foto">` : `<div style="width:80px;height:80px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center;">Tanpa Foto</div>`;
-                
-                list.innerHTML += `
-                    <div class="log-item">
-                        ${imgTag}
-                        <div class="log-info">
-                            <strong>Waktu Masuk:</strong> ${date}<br>
-                            <span class="kronologi">${item.kronologi || 'Tidak ada teks'}</span>
-                            <strong>Lokasi:</strong> ${item.address}<br>
-                            <a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">🗺️ Buka di Google Maps</a>
+        fetch('/api/logs')
+            .then(async r => {
+                const data = await r.json();
+                if (!r.ok) throw new Error(data.error || "Gagal ambil data");
+                if (!Array.isArray(data)) throw new Error("Format data dari server salah");
+                return data;
+            })
+            .then(data => {
+                const list = document.getElementById('logList');
+                if(data.length === 0) {
+                    list.innerHTML = '<p style="color:#666; text-align:center;">Belum ada laporan yang masuk.</p>';
+                    return;
+                }
+                list.innerHTML = '';
+                data.forEach(item => {
+                    const date = new Date(item.created_at).toLocaleString('id-ID');
+                    let imgTag = item.photo ? `<img src="${item.photo}" alt="Foto">` : `<div style="width:80px;height:80px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center;">Tanpa Foto</div>`;
+                    
+                    list.innerHTML += `
+                        <div class="log-item">
+                            ${imgTag}
+                            <div class="log-info">
+                                <strong>Waktu Masuk:</strong> ${date}<br>
+                                <span class="kronologi">${item.kronologi || 'Tidak ada teks'}</span>
+                                <strong>Lokasi:</strong> ${item.address || 'Alamat tidak ditemukan'}<br>
+                                <a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">🗺️ Buka di Google Maps</a>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                });
+            })
+            .catch(err => {
+                document.getElementById('logList').innerHTML = `<div style="color:#d93025; background:#fce8e6; padding:15px; border-radius:8px; border: 1px solid #f5c6cb;"><strong>⚠️ Error:</strong> ${err.message}</div>`;
             });
-        });
     } 
     // --- LOGIKA HALAMAN PUBLIK ---
     else {
@@ -195,16 +207,24 @@
                                 body: JSON.stringify({ lat, lon, photo: photoBase64, kronologi: kronologiText })
                             });
                             
-                            const data = await res.json();
-                            if(data.status === 'success') {
-                                resBox.innerHTML = '<span class="success">✅ Laporan berhasil dikirim. Tim kami akan segera memprosesnya.</span>';
-                                btn.innerText = "Terkirim";
-                            } else {
-                                throw new Error(data.message);
+                            let data;
+                            try {
+                                data = await res.json();
+                            } catch (jsonErr) {
+                                throw new Error(`Server Error (HTML/Timeout): ${res.status}`);
                             }
+
+                            if (!res.ok || data.status !== 'success') {
+                                throw new Error(data.message || data.error || "Gagal menyimpan data ke server.");
+                            }
+
+                            resBox.innerHTML = '<span class="success">✅ Laporan berhasil dikirim. Tim kami akan segera memprosesnya.</span>';
+                            btn.innerText = "Terkirim";
+                            
                         } catch (err) {
-                            resBox.innerHTML = '<span class="error">Gagal mengirim laporan. Coba lagi.</span>';
-                            btn.innerText = "Kirim Ulang";
+                            // MENAMPILKAN ERROR ASLI
+                            resBox.innerHTML = `<span class="error">❌ Gagal: ${err.message}</span>`;
+                            btn.innerText = "Coba Lagi";
                             btn.disabled = false;
                         }
                     },
