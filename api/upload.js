@@ -6,18 +6,20 @@ export default async function handler(req, res) {
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
   try {
-    // 1. Dapetin alamat dari koordinat
     let alamat = "Alamat tidak ditemukan";
+    
+    // 1. Coba ambil alamat (dibatesin 5 detik biar gak nge-hang)
     try {
       const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`, {
-        headers: { 'User-Agent': 'PortalLaporan/1.0' }
+        headers: { 'User-Agent': 'PortalLaporan/1.0' },
+        signal: AbortSignal.timeout(5000) 
       });
       if (osmRes.ok) {
         const osmData = await osmRes.json();
         alamat = osmData.display_name || alamat;
       }
     } catch (e) {
-      console.log("OSM Error:", e.message); // Skip kalo OSM error, tetep lanjut simpen koordinat
+      console.log("Gagal ambil alamat, lanjut simpen koordinat aja.");
     }
 
     // 2. Simpan ke Supabase
@@ -38,7 +40,6 @@ export default async function handler(req, res) {
       })
     });
 
-    // Kalau Supabase nolak, tangkap pesannya
     if (!dbRes.ok) {
       const errText = await dbRes.text();
       return res.status(500).json({ status: 'error', message: `Database Error: ${errText}` });
