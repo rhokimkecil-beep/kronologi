@@ -5,24 +5,24 @@ export default async function handler(req, res) {
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
-  try {
-    let alamat = "Alamat tidak ditemukan";
-    
-    // 1. Coba ambil alamat (dibatesin 5 detik biar gak nge-hang)
-    try {
-      const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`, {
-        headers: { 'User-Agent': 'PortalLaporan/1.0' },
-        signal: AbortSignal.timeout(5000) 
-      });
-      if (osmRes.ok) {
-        const osmData = await osmRes.json();
-        alamat = osmData.display_name || alamat;
-      }
-    } catch (e) {
-      console.log("Gagal ambil alamat, lanjut simpen koordinat aja.");
-    }
+  let alamat = "Alamat tidak tersedia (API Timeout)";
 
-    // 2. Simpan ke Supabase
+  // 1. Coba ambil alamat pake timeout 4 detik
+  try {
+    const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`, {
+      headers: { 'User-Agent': 'PortalLaporan/1.0' },
+      signal: AbortSignal.timeout(4000) // Maksimal tunggu 4 detik
+    });
+    if (osmRes.ok) {
+      const osmData = await osmRes.json();
+      alamat = osmData.display_name || alamat;
+    }
+  } catch (e) {
+    console.log("Gagal dapet alamat peta, lanjut simpen koordinat.");
+  }
+
+  // 2. Simpan ke Supabase (Ini yang WAJIB jalan)
+  try {
     const dbRes = await fetch(`${SUPABASE_URL}/rest/v1/locations`, {
       method: 'POST',
       headers: {
@@ -42,11 +42,13 @@ export default async function handler(req, res) {
 
     if (!dbRes.ok) {
       const errText = await dbRes.text();
-      return res.status(500).json({ status: 'error', message: `Database Error: ${errText}` });
+      console.log("Error dari Supabase:", errText);
+      return res.status(500).json({ status: 'error', message: `Database Nolak: ${errText}` });
     }
 
     res.status(200).json({ status: 'success', message: 'Data tersimpan' });
   } catch (error) {
-    res.status(500).json({ status: 'error', message: `Server Error: ${error.message}` });
+    console.log("Error koneksi ke Supabase:", error.message);
+    return res.status(500).json({ status: 'error', message: `Koneksi DB Gagal: ${error.message}` });
   }
 }
