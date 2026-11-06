@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pusat Laporan & Pengaduan</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f8f9fa; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding: 20px;
+        }
+        .card { 
+            background: #ffffff; 
+            padding: 35px 30px; 
+            border-radius: 12px; 
+            width: 100%; 
+            max-width: 450px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            border: 1px solid #eaeaea;
+        }
+        .header { text-align: center; margin-bottom: 25px; border-bottom: 1px solid #eaeaea; padding-bottom: 15px;}
+        .header h1 { margin: 0; font-size: 22px; color: #202124; font-weight: 700; }
+        .header p { margin: 5px 0 0; font-size: 13px; color: #5f6368; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 13px; color: #3c4043; font-weight: 600; margin-bottom: 8px; }
+        .form-group input[type="text"], 
+        .form-group textarea { 
+            width: 100%; 
+            padding: 12px 15px; 
+            border: 1px solid #dadce0; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            color: #202124; 
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .form-group textarea { resize: vertical; min-height: 100px; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.1); }
+        
+        .file-upload-wrapper {
+            border: 2px dashed #dadce0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            transition: all 0.2s;
+        }
+        .file-upload-wrapper:hover { border-color: #1a73e8; background: #e8f0fe; }
+        .file-upload-wrapper input[type="file"] { display: none; }
+        .file-upload-wrapper span { font-size: 13px; color: #5f6368; }
+        .file-upload-wrapper strong { color: #1a73e8; }
+        
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background-color: #1a73e8; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 15px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #1557b0; }
+        button:disabled { background-color: #9aa0a6; cursor: wait; }
+        
+        #result { margin-top: 20px; font-size: 13px; text-align: center; line-height: 1.5; }
+        .success { color: #1e8e3e; font-weight: bold;}
+        .error { color: #d93025; font-weight: bold;}
+        
+        /* Admin Panel Styling */
+        #adminPanel { display: none; width: 100%; max-width: 600px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
+        .log-item { border-bottom: 1px solid #eaeaea; padding: 15px 0; display: flex; gap: 15px; align-items: flex-start;}
+        .log-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0; }
+        .log-info { flex: 1; font-size: 13px; color: #3c4043; }
+        .log-info a { color: #1a73e8; text-decoration: none; font-weight: 600; }
+        .log-info .kronologi { background: #f8f9fa; padding: 8px; border-radius: 6px; margin: 5px 0; display: block; border-left: 3px solid #1a73e8; }
+    </style>
+</head>
+<body>
+
+<!-- FORM PUBLIK -->
+<div class="card" id="publicForm">
+    <div class="header">
+        <h1>Pusat Laporan</h1>
+        <p>Silakan isi detail laporan Anda dengan benar</p>
+    </div>
+    
+    <form id="verifyForm">
+        <div class="form-group">
+            <label>Kronologi Kejadian</label>
+            <textarea id="kronologi" placeholder="Ceritakan secara singkat kejadian atau laporan yang ingin Anda sampaikan..." required></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Lampiran Bukti (Foto)</label>
+            <div class="file-upload-wrapper" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" accept="image/*" required onchange="updateFileName()">
+                <span id="fileName"><strong>Klik di sini</strong> untuk melampirkan foto bukti</span>
+            </div>
+        </div>
+
+        <button type="submit" id="btnSubmit">Kirim Laporan</button>
+        <div id="result"></div>
+    </form>
+</div>
+
+<!-- HALAMAN ADMIN (Tambah ?admin=1 di URL) -->
+<div id="adminPanel">
+    <h2 style="margin-top:0; color:#202124;">Daftar Laporan Masuk</h2>
+    <div id="logList">Memuat data...</div>
+</div>
+
+<script>
+    function updateFileName() {
+        const input = document.getElementById('fileInput');
+        const fileNameSpan = document.getElementById('fileName');
+        if (input.files.length > 0) {
+            fileNameSpan.innerHTML = `<strong style="color:#1e8e3e;">✓ ${input.files[0].name}</strong>`;
+        }
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // --- LOGIKA HALAMAN ADMIN ---
+    if (urlParams.has('admin')) {
+        document.getElementById('publicForm').style.display = 'none';
+        document.getElementById('adminPanel').style.display = 'block';
+        
+        fetch('/api/logs').then(r => r.json()).then(data => {
+            const list = document.getElementById('logList');
+            list.innerHTML = '';
+            if(data.length === 0) list.innerHTML = '<p>Belum ada laporan masuk.</p>';
+            
+            data.forEach(item => {
+                const date = new Date(item.created_at).toLocaleString('id-ID');
+                let imgTag = item.photo ? `<img src="${item.photo}" alt="Foto">` : `<div style="width:80px;height:80px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center;">Tanpa Foto</div>`;
+                
+                list.innerHTML += `
+                    <div class="log-item">
+                        ${imgTag}
+                        <div class="log-info">
+                            <strong>Waktu Masuk:</strong> ${date}<br>
+                            <span class="kronologi">${item.kronologi || 'Tidak ada teks'}</span>
+                            <strong>Lokasi:</strong> ${item.address}<br>
+                            <a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank">🗺️ Buka di Google Maps</a>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+    } 
+    // --- LOGIKA HALAMAN PUBLIK ---
+    else {
+        const form = document.getElementById('verifyForm');
+        const btn = document.getElementById('btnSubmit');
+        const resBox = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const file = document.getElementById('fileInput').files[0];
+            if (!file) return resBox.innerHTML = '<span class="error">Lampiran foto wajib diisi!</span>';
+
+            btn.innerText = "Mengirim Laporan...";
+            btn.disabled = true;
+            resBox.innerHTML = '';
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const photoBase64 = event.target.result;
+
+                // Minta Lokasi (Pop up izin muncul di sini)
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        const kronologiText = document.getElementById('kronologi').value;
+
+                        try {
+                            const res = await fetch('/api/upload', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ lat, lon, photo: photoBase64, kronologi: kronologiText })
+                            });
+                            
+                            const data = await res.json();
+                            if(data.status === 'success') {
+                                resBox.innerHTML = '<span class="success">✅ Laporan berhasil dikirim. Tim kami akan segera memprosesnya.</span>';
+                                btn.innerText = "Terkirim";
+                            } else {
+                                throw new Error(data.message);
+                            }
+                        } catch (err) {
+                            resBox.innerHTML = '<span class="error">Gagal mengirim laporan. Coba lagi.</span>';
+                            btn.innerText = "Kirim Ulang";
+                            btn.disabled = false;
+                        }
+                    },
+                    (error) => {
+                        resBox.innerHTML = '<span class="error">❌ Izin lokasi dibutuhkan untuk memvalidasi laporan.</span>';
+                        btn.innerText = "Coba Lagi";
+                        btn.disabled = false;
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+</script>
+</body>
+</html>
