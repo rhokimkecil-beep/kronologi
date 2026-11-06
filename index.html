@@ -6,80 +6,27 @@
     <title>Pusat Laporan & Pengaduan</title>
     <style>
         * { box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #f8f9fa; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding: 20px;
-        }
-        .card { 
-            background: #ffffff; 
-            padding: 35px 30px; 
-            border-radius: 12px; 
-            width: 100%; 
-            max-width: 450px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-            border: 1px solid #eaeaea;
-        }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .card { background: #ffffff; padding: 35px 30px; border-radius: 12px; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
         .header { text-align: center; margin-bottom: 25px; border-bottom: 1px solid #eaeaea; padding-bottom: 15px;}
         .header h1 { margin: 0; font-size: 22px; color: #202124; font-weight: 700; }
         .header p { margin: 5px 0 0; font-size: 13px; color: #5f6368; }
-        
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 13px; color: #3c4043; font-weight: 600; margin-bottom: 8px; }
-        .form-group input[type="text"], 
-        .form-group textarea { 
-            width: 100%; 
-            padding: 12px 15px; 
-            border: 1px solid #dadce0; 
-            border-radius: 8px; 
-            font-size: 14px; 
-            color: #202124; 
-            font-family: inherit;
-            transition: border-color 0.2s;
-        }
-        .form-group textarea { resize: vertical; min-height: 100px; }
-        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.1); }
-        
-        .file-upload-wrapper {
-            border: 2px dashed #dadce0;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            background: #f8f9fa;
-            transition: all 0.2s;
-        }
+        .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid #dadce0; border-radius: 8px; font-size: 14px; color: #202124; font-family: inherit; resize: vertical; min-height: 100px; }
+        .form-group textarea:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 2px rgba(26,115,232,0.1); }
+        .file-upload-wrapper { border: 2px dashed #dadce0; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; background: #f8f9fa; transition: all 0.2s; }
         .file-upload-wrapper:hover { border-color: #1a73e8; background: #e8f0fe; }
         .file-upload-wrapper input[type="file"] { display: none; }
         .file-upload-wrapper span { font-size: 13px; color: #5f6368; }
         .file-upload-wrapper strong { color: #1a73e8; }
-        
-        button { 
-            width: 100%; 
-            padding: 14px; 
-            background-color: #1a73e8; 
-            color: #fff; 
-            border: none; 
-            border-radius: 8px; 
-            font-size: 15px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: background-color 0.2s;
-            margin-top: 10px;
-        }
+        button { width: 100%; padding: 14px; background-color: #1a73e8; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 10px; }
         button:hover { background-color: #1557b0; }
         button:disabled { background-color: #9aa0a6; cursor: wait; }
-        
         #result { margin-top: 20px; font-size: 13px; text-align: center; line-height: 1.5; word-break: break-word; }
         .success { color: #1e8e3e; font-weight: bold;}
         .error { color: #d93025; font-weight: bold; background:#fce8e6; padding:10px; border-radius:6px; border:1px solid #f5c6cb; display:block;}
         
-        /* Admin Panel Styling */
         #adminPanel { display: none; width: 100%; max-width: 600px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #eaeaea; }
         .log-item { border-bottom: 1px solid #eaeaea; padding: 15px 0; display: flex; gap: 15px; align-items: flex-start;}
         .log-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0; }
@@ -90,7 +37,6 @@
 </head>
 <body>
 
-<!-- FORM PUBLIK -->
 <div class="card" id="publicForm">
     <div class="header">
         <h1>Pusat Laporan</h1>
@@ -116,7 +62,6 @@
     </form>
 </div>
 
-<!-- HALAMAN ADMIN (Tambah ?admin=1 di URL) -->
 <div id="adminPanel">
     <h2 style="margin-top:0; color:#202124;">Daftar Laporan Masuk</h2>
     <div id="logList">Memuat data...</div>
@@ -133,7 +78,6 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     
-    // --- LOGIKA HALAMAN ADMIN ---
     if (urlParams.has('admin')) {
         document.getElementById('publicForm').style.display = 'none';
         document.getElementById('adminPanel').style.display = 'block';
@@ -142,7 +86,6 @@
             .then(async r => {
                 const data = await r.json();
                 if (!r.ok) throw new Error(data.error || "Gagal ambil data");
-                if (!Array.isArray(data)) throw new Error("Format data dari server salah");
                 return data;
             })
             .then(data => {
@@ -155,7 +98,6 @@
                 data.forEach(item => {
                     const date = new Date(item.created_at).toLocaleString('id-ID');
                     let imgTag = item.photo ? `<img src="${item.photo}" alt="Foto">` : `<div style="width:80px;height:80px;background:#e2e8f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center;">Tanpa Foto</div>`;
-                    
                     list.innerHTML += `
                         <div class="log-item">
                             ${imgTag}
@@ -173,7 +115,6 @@
                 document.getElementById('logList').innerHTML = `<div style="color:#d93025; background:#fce8e6; padding:15px; border-radius:8px; border: 1px solid #f5c6cb;"><strong>⚠️ Error:</strong> ${err.message}</div>`;
             });
     } 
-    // --- LOGIKA HALAMAN PUBLIK ---
     else {
         const form = document.getElementById('verifyForm');
         const btn = document.getElementById('btnSubmit');
@@ -185,56 +126,78 @@
             const file = document.getElementById('fileInput').files[0];
             if (!file) return resBox.innerHTML = '<span class="error">Lampiran foto wajib diisi!</span>';
 
-            btn.innerText = "Mengirim Laporan...";
+            btn.innerText = "Memproses Foto...";
             btn.disabled = true;
             resBox.innerHTML = '';
 
+            // FUNGSI KOMPRES FOTO (Resize ke max 800px & kualitas 60%)
             const reader = new FileReader();
             reader.onload = function(event) {
-                const photoBase64 = event.target.result;
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    let scale = 1;
+                    
+                    if (img.width > MAX_WIDTH) {
+                        scale = MAX_WIDTH / img.width;
+                    }
+                    
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Kualitas 0.6 (60%) biar file jadi kecil banget (biasanya < 100KB)
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
 
-                // Minta Lokasi (Pop up izin muncul di sini)
-                navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        const kronologiText = document.getElementById('kronologi').value;
+                    // Lanjut Minta Lokasi
+                    btn.innerText = "Mengambil Lokasi...";
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            const kronologiText = document.getElementById('kronologi').value;
 
-                        try {
-                            const res = await fetch('/api/upload', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ lat, lon, photo: photoBase64, kronologi: kronologiText })
-                            });
-                            
-                            let data;
+                            btn.innerText = "Mengirim...";
+
                             try {
-                                data = await res.json();
-                            } catch (jsonErr) {
-                                throw new Error(`Server Error (HTML/Timeout): ${res.status}`);
-                            }
+                                const res = await fetch('/api/upload', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ lat, lon, photo: compressedBase64, kronologi: kronologiText })
+                                });
+                                
+                                let data;
+                                try {
+                                    data = await res.json();
+                                } catch (jsonErr) {
+                                    throw new Error(`Server Error (HTML/Timeout): ${res.status}`);
+                                }
 
-                            if (!res.ok || data.status !== 'success') {
-                                throw new Error(data.message || data.error || "Gagal menyimpan data ke server.");
-                            }
+                                if (!res.ok || data.status !== 'success') {
+                                    throw new Error(data.message || data.error || "Gagal menyimpan data ke server.");
+                                }
 
-                            resBox.innerHTML = '<span class="success">✅ Laporan berhasil dikirim. Tim kami akan segera memprosesnya.</span>';
-                            btn.innerText = "Terkirim";
-                            
-                        } catch (err) {
-                            // MENAMPILKAN ERROR ASLI
-                            resBox.innerHTML = `<span class="error">❌ Gagal: ${err.message}</span>`;
+                                resBox.innerHTML = '<span class="success">✅ Laporan berhasil dikirim. Tim kami akan segera memprosesnya.</span>';
+                                btn.innerText = "Terkirim";
+                                
+                            } catch (err) {
+                                resBox.innerHTML = `<span class="error">❌ Gagal: ${err.message}</span>`;
+                                btn.innerText = "Coba Lagi";
+                                btn.disabled = false;
+                            }
+                        },
+                        (error) => {
+                            resBox.innerHTML = '<span class="error">❌ Izin lokasi dibutuhkan untuk memvalidasi laporan.</span>';
                             btn.innerText = "Coba Lagi";
                             btn.disabled = false;
-                        }
-                    },
-                    (error) => {
-                        resBox.innerHTML = '<span class="error">❌ Izin lokasi dibutuhkan untuk memvalidasi laporan.</span>';
-                        btn.innerText = "Coba Lagi";
-                        btn.disabled = false;
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
+                    );
+                };
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
