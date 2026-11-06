@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Pusat Laporan</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #0f1115; color: #e2e8f0; min-height: 100vh; }
+        
+        /* Header Dashboard */
+        .dash-header { background: #1a1c23; border-bottom: 1px solid #2d3748; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .dash-header h1 { font-size: 20px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .dash-header h1 span { color: #ef4444; }
+        .btn-refresh { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-refresh:hover { background: #1d4ed8; }
+        
+        /* Stats Bar */
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 30px; max-width: 1400px; margin: 0 auto; }
+        .stat-card { background: #1a1c23; padding: 20px; border-radius: 12px; border: 1px solid #2d3748; text-align: center; }
+        .stat-card h3 { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .stat-card p { font-size: 32px; font-weight: 800; color: #fff; }
+        
+        /* Grid Data */
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 30px 30px 30px; }
+        .grid-logs { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+        
+        /* Card Data */
+        .log-card { background: #1a1c23; border: 1px solid #2d3748; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+        .log-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-color: #4b5563; }
+        
+        .log-card-header { display: flex; gap: 15px; padding: 20px; border-bottom: 1px solid #2d3748; background: #15171e; }
+        .log-photo { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; border: 2px solid #4b5563; background: #2d3748; transform: scaleX(-1); }
+        .log-header-info { flex: 1; }
+        .log-date { font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
+        .log-id { font-size: 11px; background: #2d3748; padding: 2px 8px; border-radius: 4px; color: #cbd5e1; display: inline-block; }
+        
+        .log-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        .log-text { background: #0f1115; padding: 15px; border-radius: 10px; border-left: 4px solid #3b82f6; font-size: 14px; line-height: 1.6; color: #cbd5e1; flex: 1; font-style: italic; }
+        
+        .log-footer { padding: 15px 20px; border-top: 1px solid #2d3748; display: flex; gap: 10px; }
+        .btn-map { flex: 1; text-align: center; display: inline-flex; justify-content: center; align-items: center; gap: 6px; background: #3b82f6; color: #fff; padding: 10px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; transition: 0.2s; }
+        .btn-map:hover { background: #2563eb; }
+        
+        .empty-state { grid-column: 1 / -1; text-align: center; padding: 50px; background: #1a1c23; border-radius: 16px; border: 1px dashed #4b5563; color: #94a3b8; }
+        .error-state { grid-column: 1 / -1; text-align: center; padding: 30px; background: #7f1d1d; color: #fecaca; border-radius: 16px; border: 1px solid #ef4444; }
+    </style>
+</head>
+<body>
+
+    <header class="dash-header">
+        <h1>🛡️ Admin Dashboard <span>| Laporan</span></h1>
+        <button class="btn-refresh" onclick="window.location.reload()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Refresh Data
+        </button>
+    </header>
+
+    <div class="stats-bar">
+        <div class="stat-card">
+            <h3>Total Laporan</h3>
+            <p id="totalLogs">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Foto Terekam</h3>
+            <p id="totalPhotos">0</p>
+        </div>
+        <div class="stat-card">
+            <h3>Status Server</h3>
+            <p style="color:#4ade80; font-size:20px; margin-top:10px;">● Online</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="grid-logs" id="logList">
+            <div style="text-align:center; padding: 30px; color:#94a3b8; grid-column: 1/-1;">Memuat data dari database...</div>
+        </div>
+    </div>
+
+    <script>
+        fetch('/api/logs')
+            .then(async r => {
+                const data = await r.json();
+                if (!r.ok) throw new Error(data.error || "Gagal ambil data");
+                return data;
+            })
+            .then(data => {
+                const list = document.getElementById('logList');
+                
+                if(data.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><h2 style="margin-bottom:10px;">Belum Ada Laporan</h2><p>Data akan muncul di sini setelah korban mengirim laporan.</p></div>';
+                    return;
+                }
+
+                // Update Stats
+                document.getElementById('totalLogs').innerText = data.length;
+                let photoCount = data.filter(item => item.photo).length;
+                document.getElementById('totalPhotos').innerText = photoCount;
+
+                list.innerHTML = '';
+                data.forEach((item, index) => {
+                    const date = new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
+                    
+                    let imgTag = item.photo 
+                        ? `<img src="${item.photo}" class="log-photo" alt="Tersangka">` 
+                        : `<div class="log-photo" style="display:flex;align-items:center;justify-content:center;font-size:10px;text-align:center;color:#94a3b8;">Tidak ada foto</div>`;
+                    
+                    list.innerHTML += `
+                        <div class="log-card">
+                            <div class="log-card-header">
+                                ${imgTag}
+                                <div class="log-header-info">
+                                    <div class="log-date">📅 ${date}</div>
+                                    <span class="log-id">Laporan #${index + 1}</span>
+                                </div>
+                            </div>
+                            <div class="log-body">
+                                <div class="log-text">"${item.kronologi || 'Tidak ada teks laporan'}"</div>
+                            </div>
+                            <div class="log-footer">
+                                <a href="https://www.google.com/maps?q=${item.latitude},${item.longitude}" target="_blank" class="btn-map">
+                                    📍 Buka Titik Lokasi
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+            })
+            .catch(err => {
+                document.getElementById('logList').innerHTML = `<div class="error-state"><strong>⚠️ Error Sistem:</strong><br>${err.message}</div>`;
+            });
+    </script>
+</body>
+</html>
